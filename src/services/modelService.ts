@@ -36,7 +36,7 @@ function parseNumberLike(raw: string): { value: number | null; upperBound: numbe
   }
   let n = Number(numeric);
   if (multiplierMatch) {
-    const m = multiplierMatch[1].toUpperCase();
+    const m = String(multiplierMatch[1]).toUpperCase();
     n *= m === "K" ? 1_000 : m === "M" ? 1_000_000 : 1_000_000_000;
   }
   if (approximate) {
@@ -175,7 +175,11 @@ function median(values: number[]): number | null {
   if (values.length === 0) return null;
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  if (sorted.length % 2) return sorted[mid] ?? null;
+  const lo = sorted[mid - 1];
+  const hi = sorted[mid];
+  if (lo == null || hi == null) return null;
+  return (lo + hi) / 2;
 }
 
 export function getStatistics(): Statistics {
@@ -214,7 +218,7 @@ export function estimateCost(model: Model, workload: WorkloadInput): CostEstimat
   const missing: string[] = [];
   if (inPrice == null) missing.push("input price");
   if (outPrice == null) missing.push("output price");
-  if (missing.length > 0) {
+  if (inPrice == null || outPrice == null) {
     return {
       inputCost: null,
       outputCost: null,
